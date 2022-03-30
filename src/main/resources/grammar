@@ -1,0 +1,9 @@
+Terminals:=+ * ( ) id
+NonTerminals:=E T F
+Rule:=E->E
+Rule:=E->E+T
+Rule:=E->T
+Rule:=T->T*F
+Rule:=T->F
+Rule:=F->(E)
+Rule:=F->id
