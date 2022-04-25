@@ -23,8 +23,7 @@ class GrammarTokenizer {
     enum TokenType {Terminals, NonTerminals, Rule}
 
     public Grammar parseGrammar(List<String> grammarDefinitions) {
-        log.debug("Parse grammar from definitions");
-        log.debug("{}", grammarDefinitions);
+        log.debug("Parse grammar from definitions {}", grammarDefinitions);
 
         var terminals = parseTerminals(grammarDefinitions);
         var nonTerminals = parseNonTerminals(grammarDefinitions);
@@ -34,7 +33,7 @@ class GrammarTokenizer {
         log.debug("NonTerminals: {}", nonTerminals);
         log.debug("Rules: {}", rules);
 
-        return new Grammar(terminals, nonTerminals, null);
+        return new Grammar(terminals, nonTerminals, rules);
     }
 
     private Set<Terminal> parseTerminals(List<String> grammarDefinitions) {
