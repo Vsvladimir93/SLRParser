@@ -1,13 +1,48 @@
 package com.petproject.slr.grammar;
 
-import com.petproject.slr.grammar.token.NonTerminal;
-import com.petproject.slr.grammar.token.Rule;
-import com.petproject.slr.grammar.token.Terminal;
+import com.petproject.slr.grammar.exception.GrammarProcessingException;
+import com.petproject.slr.grammar.token.*;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 
-public record Grammar(Set<Terminal> terminals,
-                      Set<NonTerminal> nonTerminals,
-                      List<Rule> rules) {
+public record Grammar(List<Terminal> terminals,
+                      List<NonTerminal> nonTerminals,
+                      List<Rule> rules,
+                      Boolean isAugmented,
+                      AcceptToken acceptToken,
+                      EpsilonToken epsilonToken) {
+
+    public Optional<Rule> getAugmentedRule() {
+        if (isAugmented)
+            return Optional.of(rules.get(0));
+
+        return Optional.empty();
+    }
+
+
+    public Rule getPrimaryRule() {
+        return rules.stream()
+                .findFirst()
+                .orElseThrow(
+                        () -> new GrammarProcessingException("Can't get primary rule")
+                );
+    }
+
+
+    public List<Rule> getRulesByKey(NonTerminal key) {
+        return rules.stream()
+                .filter(r -> r.key().equals(key))
+                .toList();
+    }
+
+    public Grammar getSimpleGrammar() {
+        if (!isAugmented)
+            return this;
+
+        var agToken = getAugmentedRule().orElseThrow().key();
+        return new Grammar(terminals, nonTerminals.stream().filter(nt -> !nt.equals(agToken)).toList(),
+                rules.stream().filter(r -> !r.key().equals(agToken)).toList(),
+                false, acceptToken, epsilonToken);
+    }
 }

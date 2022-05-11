@@ -1,10 +1,7 @@
 package com.petproject.slr.grammar;
 
 import com.petproject.slr.grammar.exception.GrammarParseException;
-import com.petproject.slr.grammar.token.NonTerminal;
-import com.petproject.slr.grammar.token.Rule;
-import com.petproject.slr.grammar.token.Terminal;
-import com.petproject.slr.grammar.token.Token;
+import com.petproject.slr.grammar.token.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -16,7 +13,7 @@ import java.util.stream.Collectors;
 @Slf4j
 class GrammarTokenizer {
 
-    private static final String KEY_VALUE_SEPARATOR = ":=";
+    private static final String KEY_VALUE_SEPARATOR = " : ";
     private static final String RULE_KEY_SEPARATOR = "->";
     private static final String RULE_VALUE_SEPARATOR = "|";
 
@@ -33,18 +30,19 @@ class GrammarTokenizer {
         log.debug("NonTerminals: {}", nonTerminals);
         log.debug("Rules: {}", rules);
 
-        return new Grammar(terminals, nonTerminals, rules);
+        return new Grammar(terminals, nonTerminals, rules, false, new AcceptToken("$"),
+                new EpsilonToken("#"));
     }
 
-    private Set<Terminal> parseTerminals(List<String> grammarDefinitions) {
+    private List<Terminal> parseTerminals(List<String> grammarDefinitions) {
         return parseToken(grammarDefinitions, TokenType.Terminals, Terminal.class);
     }
 
-    private Set<NonTerminal> parseNonTerminals(List<String> grammarDefinitions) {
+    private List<NonTerminal> parseNonTerminals(List<String> grammarDefinitions) {
         return parseToken(grammarDefinitions, TokenType.NonTerminals, NonTerminal.class);
     }
 
-    private List<Rule> parseRules(List<String> grammarDefinitions, Set<Terminal> terminals, Set<NonTerminal> nonTerminals) {
+    private List<Rule> parseRules(List<String> grammarDefinitions, List<Terminal> terminals, List<NonTerminal> nonTerminals) {
         return grammarDefinitions.stream()
                 .filter(d -> d.startsWith(TokenType.Rule.name()))
                 .map(d -> d.split(KEY_VALUE_SEPARATOR)[1])
@@ -53,7 +51,7 @@ class GrammarTokenizer {
                 .collect(Collectors.toList());
     }
 
-    private <T extends Token> Set<T> parseToken(List<String> grammarDefinitions, TokenType tokenType, Class<T> clazz) {
+    private <T extends Token> List<T> parseToken(List<String> grammarDefinitions, TokenType tokenType, Class<T> clazz) {
         return grammarDefinitions.stream()
                 .filter(d -> d.startsWith(tokenType.name()))
                 .map(d -> d.split(KEY_VALUE_SEPARATOR)[1].split(" "))
@@ -68,18 +66,18 @@ class GrammarTokenizer {
                     return null;
                 })
                 .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
     }
 
-    private Rule parseRule(String[] ruleTuple, Set<Terminal> terminals, Set<NonTerminal> nonTerminals) {
-        var ruleValue = new StringBuilder(ruleTuple[1]);
+    private Rule parseRule(String[] ruleTuple, List<Terminal> terminals, List<NonTerminal> nonTerminals) {
+        var ruleValue = new StringBuilder(ruleTuple[1].replaceAll(" ", ""));
         List<Token> tokens = new ArrayList<>();
         tokens.addAll(terminals);
         tokens.addAll(nonTerminals);
 
         List<Token> result = new ArrayList<>();
 
-        while(ruleValue.length() > 0) {
+        while (ruleValue.length() > 0) {
             var token = tokens.stream()
                     .filter(t -> ruleValue.toString().startsWith(t.getValue()))
                     .findFirst();
